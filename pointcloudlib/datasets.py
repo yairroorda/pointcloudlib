@@ -1,3 +1,4 @@
+import logging
 import re
 import urllib.request
 import zipfile
@@ -8,9 +9,9 @@ import geopandas as gpd
 import requests
 
 from .base import PointCloudProvider
-from .utils import get_logger
 
-logger = get_logger("Datasets")
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class IGNLidarHD(PointCloudProvider):

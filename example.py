@@ -1,4 +1,5 @@
 import importlib
+import logging
 import tkinter as tk
 from pathlib import Path
 
@@ -17,6 +18,9 @@ tkintermapview = importlib.import_module("tkintermapview")
 
 # Default map center (Groningen) in WGS84.
 _START_LON, _START_LAT = 6.5665, 53.2194
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] | %(name)s | %(message)s")
 
 
 def make_map(title):
@@ -120,9 +124,9 @@ def demo_AHN():
     result_path = ahn_chain.fetch(aoi=aoi_rdnew.polygon, aoi_crs=aoi_rdnew.crs, output_path="./data/groningen_plein.copc.laz")
 
     if result_path:
-        print(f"\n✅ Success! Data successfully downloaded and processed at: {result_path}")
+        logger.info(f"✅ Success! Data successfully downloaded and processed at: {result_path}")
     else:
-        print("\n❌ Failed to retrieve data from any source in the chain.")
+        logger.error("❌ Failed to retrieve data from any source in the chain.")
 
 
 def demo_lidar_hd():
@@ -134,9 +138,9 @@ def demo_lidar_hd():
     result_path = lidarhd.fetch(aoi=aoi_wgs84.polygon, aoi_crs=aoi_wgs84.crs, output_path="./data/louvre.copc.laz")
 
     if result_path:
-        print(f"\n✅ Success! Data successfully downloaded and processed at: {result_path}")
+        logger.info(f"✅ Success! Data successfully downloaded and processed at: {result_path}")
     else:
-        print("\n❌ Failed to retrieve data from any source in the chain.")
+        logger.error("❌ Failed to retrieve data from any source in the chain.")
 
 
 def demo_can_elevation():
@@ -151,9 +155,9 @@ def demo_can_elevation():
     result_path = canelevation.fetch(aoi=Montreal.polygon, aoi_crs=Montreal.crs, output_path="./data/Montreal.copc.laz")
 
     if result_path:
-        print(f"\n✅ Success! Data successfully downloaded and processed at: {result_path}")
+        logger.info(f"✅ Success! Data successfully downloaded and processed at: {result_path}")
     else:
-        print("\n❌ Failed to retrieve data from any source in the chain.")
+        logger.error("❌ Failed to retrieve data from any source in the chain.")
 
 
 def main():

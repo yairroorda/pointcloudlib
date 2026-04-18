@@ -1,4 +1,5 @@
 import json
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional
@@ -6,9 +7,10 @@ from typing import List, Optional
 import geopandas as gpd
 from shapely.geometry import Polygon
 
-from .utils import get_logger, status_spinner, timed
+from .utils import status_spinner, timed
 
-logger = get_logger(name="Query")
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class PointCloudProvider(ABC):
