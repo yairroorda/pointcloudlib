@@ -18,10 +18,9 @@ class PointCloudProvider(ABC):
     crs: str
     file_type: str
 
-    def __init__(self, data_dir: Optional[Path | str] = None, fallback: Optional[List["PointCloudProvider"]] = None):
+    def __init__(self, data_dir: Optional[Path | str] = None):
         self.data_dir = Path(data_dir) if data_dir else Path.cwd() / "data"
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.fallback = fallback or []
 
     @abstractmethod
     def get_index(self, aoi_gdf: gpd.GeoDataFrame) -> List[str]:
@@ -72,8 +71,6 @@ class PointCloudProvider(ABC):
             output_path = Path(output_path)
 
         gdf_aoi = gpd.GeoDataFrame(geometry=[aoi], crs=aoi_crs).to_crs(self.crs)
-
-        # 1. Try the primary dataset
         try:
             tile_urls = self.get_index(gdf_aoi)
             if tile_urls:
@@ -85,18 +82,23 @@ class PointCloudProvider(ABC):
             logger.warning(f"[{self.name}] failed: {exc}")
             if output_path.exists():
                 output_path.unlink()
+        return None
 
-        # 2. Try the fallback chain
-        if self.fallback:
-            logger.info(f"[{self.name}] Initiating fallback chain...")
-            for fallback_provider in self.fallback:
-                # Sync the fallback's output directory to match the primary's
-                if not getattr(fallback_provider, "_user_set_dir", False):
-                    fallback_provider.data_dir = self.data_dir
 
-                result = fallback_provider.fetch(aoi, output_path, aoi_crs)
-                if result and result.exists():
-                    return result
+class ProviderChain:
+    def __init__(self, providers: List[PointCloudProvider]):
+        self.providers = providers
 
-        logger.error("Primary dataset and all fallbacks failed.")
+    def fetch(self, aoi: Polygon, output_path: Optional[Path | str] = None, aoi_crs: str = "EPSG:28992") -> Optional[Path]:
+        target_path = Path(output_path) if output_path is not None else None
+        target_dir = target_path.parent if target_path is not None else None
+
+        for provider in self.providers:
+            if target_dir is not None:
+                provider.data_dir = target_dir
+
+            result = provider.fetch(aoi=aoi, output_path=target_path, aoi_crs=aoi_crs)
+            if result and result.exists():
+                return result
+
         return None

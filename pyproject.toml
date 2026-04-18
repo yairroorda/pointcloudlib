@@ -24,3 +24,6 @@ dependencies = [
     "requests",
     "tkintermapview==1.29"
 ]
+
+[tool.setuptools]
+packages = ["pointcloudlib"]

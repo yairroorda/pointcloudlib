@@ -16,4 +16,3 @@ dist/
 
 # Pixi environment
 .pixi/
-pixi.lock
