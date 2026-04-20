@@ -3,12 +3,13 @@ import logging
 import tkinter as tk
 from pathlib import Path
 
-import geopandas as gpd
-from shapely.geometry import Polygon as ShapelyPolygon
+import geopandas as gpd  # type: ignore
+from shapely.geometry import Polygon as ShapelyPolygon  # type: ignore
 
 from pointcloudlib import AHN4, AHN5, AHN6, CanElevation, IGNLidarHD
 from pointcloudlib.base import ProviderChain
-from pointcloudlib.utils import open_in_cloudcompare
+
+# from pointcloudlib.utils import open_in_cloudcompare
 
 # make sure data directory exists
 data_dir = Path("./data")

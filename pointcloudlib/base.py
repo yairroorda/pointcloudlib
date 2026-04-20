@@ -86,16 +86,14 @@ class PointCloudProvider(ABC):
         if resolution != "full":
             pipeline.append({"type": "filters.sample", "radius": resolution})
 
-        pipeline.append(
-            {
-                "type": "writers.copc",
-                "filename": str(output_path),
-                "forward": "all",
-                "offset_x": "auto",
-                "offset_y": "auto",
-                "offset_z": "auto",
-            }
-        )
+        pipeline.append({
+            "type": "writers.copc",
+            "filename": str(output_path),
+            "forward": "all",
+            "offset_x": "auto",
+            "offset_y": "auto",
+            "offset_z": "auto",
+        })
 
         try:
             with status_spinner(f"Processing {self.name} with PDAL ..."):
