@@ -76,7 +76,6 @@ def demo_can_elevation():
 def main():
 
     demo_AHN()
-    # open_in_cloudcompare("./data/groningen_plein.copc.laz")
     demo_lidar_hd()
     demo_can_elevation()
     demo_resolution()

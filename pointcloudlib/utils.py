@@ -37,19 +37,6 @@ def download_file(url: str, dest_path: Path, timeout: int = 15, chunk_size: int 
         raise ProviderFetchError("Network", f"Failed to download {url}: {exc}") from exc
 
 
-def open_in_cloudcompare(dataset_path: Path | str) -> None:
-    import os
-    import subprocess
-
-    if os.path.exists(dataset_path):
-        logger.info(f"Opening {dataset_path} in CloudCompare...")
-        cmd = ["flatpak", "run", "org.cloudcompare.CloudCompare", str(dataset_path)]
-
-        subprocess.Popen(cmd)
-    else:
-        logger.warning(f"Could not find file at {dataset_path}.")
-
-
 def timed(task_name: str):
     def decorator(func):
         @wraps(func)
