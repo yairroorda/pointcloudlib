@@ -60,7 +60,7 @@ class PointCloudProvider(ABC):
         try:
             import pdal  # type: ignore
         except ImportError as exc:
-            raise PDALExecutionError(self.name, "PDAL Python bindings are required. Install PDAL via the project's pixi environment.") from exc
+            raise PDALExecutionError(self.name, "PDAL Python bindings are missing. Ensure PDAL is installed on your system (e.g., via 'conda install -c conda-forge python-pdal')") from exc
 
         reader_type = "readers.copc" if self.file_type == "COPC" else "readers.las"
         stages = []
