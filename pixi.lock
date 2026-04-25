@@ -12695,12 +12695,12 @@ packages:
 - pypi: ./
   name: pointcloudlib
   version: 0.1.0
-  sha256: 24dd87f76b0f652eb2b481398d2be08949abf4edc367f0c3cfaef4be33daa739
+  sha256: 982ccfd10a5efcdac1cf34ede0345dd2a42d575a8aeaf700f9ed69e33202aba7
   requires_dist:
   - geopandas
   - shapely
   - requests
-  - tkintermapview==1.29
+  - tkintermapview>=1.29
   requires_python: '>=3.10'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/postgresql-18.3-h9d31465_0.conda
   sha256: bcb9bf8bd7a6ebaf755c13af51e3e02e3975835b2c62ad3bbb6985f858a6f42c

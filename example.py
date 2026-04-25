@@ -3,7 +3,7 @@ from pathlib import Path
 
 from shapely.geometry import Polygon as ShapelyPolygon  # type: ignore
 
-from pointcloudlib import AHN4, AHN5, AHN6, CanElevation, IGNLidarHD
+from pointcloudlib import AHN5, AHN6, CanElevation, IGNLidarHD
 from pointcloudlib.base import AOIPolygon, ProviderChain
 
 # from pointcloudlib.utils import open_in_cloudcompare
