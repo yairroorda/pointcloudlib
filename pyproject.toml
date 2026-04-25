@@ -22,7 +22,7 @@ dependencies = [
     "geopandas",
     "shapely",
     "requests",
-    "tkintermapview==1.29"
+    "tkintermapview>=1.29"
 ]
 
 [project.urls]
