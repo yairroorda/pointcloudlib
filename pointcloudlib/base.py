@@ -1,14 +1,22 @@
+import importlib
 import json
 import logging
+import tkinter as tk
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Literal
 
 import geopandas as gpd
 from shapely.geometry import Polygon
+from shapely.geometry import Polygon as ShapelyPolygon
 
 from .exceptions import PDALExecutionError, ProviderFetchError
 from .utils import status_spinner, timed
+
+tkintermapview = importlib.import_module("tkintermapview")
+
+# Default map center (Groningen) in WGS84.
+_START_LON, _START_LAT = 6.5665, 53.2194
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -219,3 +227,95 @@ class ProviderChain(PointCloudProvider):
             raise ProviderFetchError(self.name, "All providers failed: " + " | ".join(failures))
 
         return None
+
+
+class AOIPolygon:
+    def __init__(self, polygon: ShapelyPolygon, crs: str = "EPSG:28992"):
+        self.polygon = polygon
+        self.crs = crs
+
+    @classmethod
+    def get_from_user(cls, title: str = "Draw polygon") -> "AOIPolygon":
+        import tkinter as tk
+
+        root, map_widget, controls = make_map(title)
+        points_latlon: list[tuple[float, float]] = []
+        polygon = {"obj": None}
+        marker_list: list = []
+
+        def redraw():
+            if polygon["obj"] is not None:
+                polygon["obj"].delete()
+            for m in marker_list:
+                m.delete()
+            marker_list.clear()
+            for pt in points_latlon:
+                marker_list.append(map_widget.set_marker(*pt))
+            if len(points_latlon) == 2:
+                polygon["obj"] = map_widget.set_path(points_latlon)
+            elif len(points_latlon) >= 3:
+                polygon["obj"] = map_widget.set_polygon(points_latlon)
+
+        def on_click(coords):
+            points_latlon.append((float(coords[0]), float(coords[1])))
+            redraw()
+
+        def clear():
+            points_latlon.clear()
+            redraw()
+
+        tk.Button(controls, text="Clear", command=clear).pack(fill=tk.X)
+        tk.Button(controls, text="Done", command=root.quit).pack(fill=tk.X, pady=(8, 0))
+        map_widget.add_left_click_map_command(on_click)
+
+        root.mainloop()
+        root.destroy()
+
+        poly = ShapelyPolygon([(lon, lat) for lat, lon in points_latlon])
+        return cls(poly, crs="EPSG:4326")
+
+    def save_to_file(self, path: Path, crs: str | None = None) -> None:
+        output_crs = crs or self.crs
+        gdf = gpd.GeoDataFrame(geometry=[self.polygon], crs=output_crs)
+        gdf.to_file(path, driver="GeoJSON")
+
+    @classmethod
+    def get_from_file(cls, path: Path) -> "AOIPolygon":
+        gdf = gpd.read_file(path)
+        if gdf.empty:
+            raise ValueError(f"No geometry found in {path}")
+        source_crs = gdf.crs.to_string() if gdf.crs else "EPSG:4326"
+        if gdf.crs is None:
+            gdf = gdf.set_crs("EPSG:4326")
+        return cls(gdf.geometry.iloc[0], crs=source_crs)
+
+    def to_crs(self, crs: str) -> "AOIPolygon":
+        gdf = gpd.GeoDataFrame(geometry=[self.polygon], crs=self.crs)
+        gdf_projected = gdf.to_crs(crs)
+        return AOIPolygon(gdf_projected.geometry.iloc[0], crs=crs)
+
+    @property
+    def wkt(self):
+        return self.polygon.wkt
+
+    def __getattr__(self, attr):
+        # Delegate attribute access to the underlying polygon
+        return getattr(self.polygon, attr)
+
+
+def make_map(title):
+    """Create a tkinter window with a map widget and a side panel."""
+    root = tk.Tk()
+    root.title(title)
+    root.geometry("1100x700")
+
+    map_widget = tkintermapview.TkinterMapView(root, width=850, height=700, corner_radius=0)
+    map_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    controls = tk.Frame(root, padx=10, pady=10)
+    controls.pack(side=tk.RIGHT, fill=tk.Y)
+
+    map_widget.set_position(float(_START_LAT), float(_START_LON))
+    map_widget.set_zoom(13)
+
+    return root, map_widget, controls
