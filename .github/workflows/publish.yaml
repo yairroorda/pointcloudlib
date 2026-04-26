@@ -1,0 +1,33 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published] # This workflow ONLY runs when you create a GitHub Release
+
+# Crucial for PyPI Trusted Publishing
+permissions:
+  contents: read
+  id-token: write 
+
+jobs:
+  build-and-publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          environments: dev
+
+      - name: Build Distribution
+        run: pixi run build-dist
+
+      - name: Check Distribution
+        run: pixi run check-dist
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
