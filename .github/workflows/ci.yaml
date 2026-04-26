@@ -25,7 +25,7 @@ jobs:
           environments: dev
 
       - name: Run Linter
-        run: pixi run lint
+        run: pixi run -e dev lint
 
       - name: Run Tests
-        run: pixi run test
+        run: pixi run -e dev test
