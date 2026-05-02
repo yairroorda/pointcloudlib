@@ -26,7 +26,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/yairroorda/cloudfetch"
-# Documentation = "https://yairroorda.github.io/cloudfetch/"
+Documentation = "https://yairroorda.github.io/cloudfetch/"
 Repository = "https://github.com/yairroorda/cloudfetch.git"
 Issues = "https://github.com/yairroorda/cloudfetch/issues"
 
