@@ -17,6 +17,12 @@ logger.addHandler(logging.NullHandler())
 
 
 class IGNLidarHD(PointCloudProvider):
+    """Provider for IGN LiDAR HD tiles in France.
+
+    The provider queries the public WFS index and rewrites tile URLs to the
+    OVH object storage mirror used for downloads.
+    """
+
     name = "IGN_LIDAR_HD"
     crs = "EPSG:2154"
     file_type = "COPC"
@@ -54,7 +60,11 @@ class IGNLidarHD(PointCloudProvider):
 
 
 class AHNProvider(PointCloudProvider):
-    """Internal base class for Dutch AHN datasets to handle GPKG downloads."""
+    """Base class for Dutch AHN datasets backed by a GPKG tile index.
+
+    Subclasses define the dataset-specific index location and tile naming
+    scheme.
+    """
 
     index_url: str
     index_cache_name: str
@@ -88,6 +98,8 @@ class AHNProvider(PointCloudProvider):
 
 
 class AHN6(AHNProvider):
+    """Provider for AHN6 COPC tiles."""
+
     name = "AHN6"
     file_type = "COPC"
     index_url = "https://basisdata.nl/hwh-ahn/AUX/bladwijzer_AHN6.gpkg"
@@ -96,6 +108,19 @@ class AHN6(AHNProvider):
     base_url = "https://fsn1.your-objectstorage.com/hwh-ahn/AHN6/01_LAZ/"
 
     def get_index(self, aoi_gdf: gpd.GeoDataFrame) -> List[str]:
+        """AHN6 tiles are named by their lower-left corner coordinates, so we query the index for intersecting tiles and construct URLs directly.
+
+        Parameters
+        ----------
+        aoi_gdf : gpd.GeoDataFrame
+            AOI geometries to query against the tile index.
+
+        Returns
+        -------
+        List[str]
+            List of tile URLs intersecting the AOI.
+
+        """
         hits = self._get_intersecting_hits(aoi_gdf)
         if hits.empty:
             return []
@@ -109,7 +134,14 @@ class AHN6(AHNProvider):
 
 
 class AHNArchive(AHNProvider):
-    """Dynamic class for older AHN archives (1-5)."""
+    """Base class for AHN 1-5 archive datasets.
+
+    Parameters
+    ----------
+    version : int
+        AHN archive version number used to build the dataset name and base
+        URL.
+    """
 
     file_type = "LAS"
     index_url = "https://static.fwrite.org/2022/01/index_sheets.gpkg_.zip"
@@ -122,6 +154,19 @@ class AHNArchive(AHNProvider):
         self.base_url = f"https://geotiles.citg.tudelft.nl/AHN{version}_T"
 
     def get_index(self, aoi_gdf: gpd.GeoDataFrame) -> List[str]:
+        """AHN 1-5 archive tiles are indexed by their GT_AHNSUB sheet name, which we can use to construct LAZ URLs directly.
+
+        Parameters
+        ----------
+        aoi_gdf : gpd.GeoDataFrame
+            AOI geometries to query against the tile index.
+
+        Returns
+        -------
+        List[str]
+            List of tile URLs intersecting the AOI.
+
+        """
         hits = self._get_intersecting_hits(aoi_gdf)
         if hits.empty:
             return []
@@ -141,26 +186,36 @@ class AHNArchive(AHNProvider):
 
 # Expose clean wrappers for the user
 class AHN5(AHNArchive):
+    """Provider for AHN5 archive tiles."""
+
     def __init__(self, **kwargs):
         super().__init__(version=5, **kwargs)
 
 
 class AHN4(AHNArchive):
+    """Provider for AHN4 archive tiles."""
+
     def __init__(self, **kwargs):
         super().__init__(version=4, **kwargs)
 
 
 class AHN3(AHNArchive):
+    """Provider for AHN3 archive tiles."""
+
     def __init__(self, **kwargs):
         super().__init__(version=3, **kwargs)
 
 
 class AHN2(AHNArchive):
+    """Provider for AHN2 archive tiles."""
+
     def __init__(self, **kwargs):
         super().__init__(version=2, **kwargs)
 
 
 class AHN1(AHNArchive):
+    """Provider for AHN1 archive tiles."""
+
     def __init__(self, **kwargs):
         super().__init__(version=1, **kwargs)
 

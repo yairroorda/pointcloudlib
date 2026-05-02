@@ -22,7 +22,17 @@ logger.addHandler(logging.NullHandler())
 
 
 class PointCloudProvider(ABC):
-    """Abstract base class for all point cloud datasets."""
+    """Abstract base class for point cloud providers.
+
+    Subclasses implement tile discovery for a specific dataset and use this
+    base class for AOI reprojection and PDAL execution.
+
+    Parameters
+    ----------
+    data_dir : Path | str | None, optional
+        Base directory for cached indices and fetched output. Defaults to
+        ``./data`` in the current working directory.
+    """
 
     name: str
     crs: str
@@ -35,7 +45,13 @@ class PointCloudProvider(ABC):
 
     @abstractmethod
     def get_index(self, aoi_gdf: gpd.GeoDataFrame) -> list[str]:
-        """Returns a list of downloadable tile URLs."""
+        """Returns a list of downloadable tile URLs.
+
+        Parameters
+        ----------
+        aoi_gdf : gpd.GeoDataFrame
+            AOI geometry as a GeoDataFrame in the provider CRS.
+        """
         ...
 
     def _execute_pdal(
@@ -162,9 +178,15 @@ class PointCloudProvider(ABC):
 
 
 class ProviderChain(PointCloudProvider):
-    """
-    A composite provider that tries multiple providers in sequence
-    until one successfully fetches the data.
+    """Try a sequence of providers until one succeeds.
+
+    Parameters
+    ----------
+    providers : list[PointCloudProvider]
+        Providers to try in order.
+    data_dir : Path | str | None, optional
+        Base directory for any output written by the chain. Defaults to
+        ``./data``.
     """
 
     # Give the chain its own required class attributes
@@ -230,13 +252,34 @@ class ProviderChain(PointCloudProvider):
 
 
 class AOIPolygon:
+    """Polygon wrapper with CRS metadata and file/map helpers.
+
+    Parameters
+    ----------
+    polygon : ShapelyPolygon
+        Geometry stored by the wrapper.
+    crs : str, default="EPSG:28992"
+        Coordinate reference system of ``polygon``.
+    """
+
     def __init__(self, polygon: ShapelyPolygon, crs: str = "EPSG:28992"):
         self.polygon = polygon
         self.crs = crs
 
     @classmethod
     def get_from_user(cls, title: str = "Draw polygon") -> "AOIPolygon":
-        import tkinter as tk
+        """Launch a map for the user to draw an AOI polygon.
+
+        Parameters
+        ----------
+        title : str, default="Draw polygon"
+            Window title for the map interface.
+
+        Returns
+        -------
+        AOIPolygon
+                An AOIPolygon instance containing the user-drawn geometry in EPSG:4326.
+        """
 
         root, map_widget, controls = make_map(title)
         points_latlon: list[tuple[float, float]] = []
@@ -304,7 +347,18 @@ class AOIPolygon:
 
 
 def make_map(title):
-    """Create a tkinter window with a map widget and a side panel."""
+    """Create a Tkinter window for drawing an AOI polygon.
+
+    Parameters
+    ----------
+    title : str
+        Window title.
+
+    Returns
+    -------
+    tuple[tk.Tk, tkintermapview.TkinterMapView, tk.Frame]
+        Root window, map widget, and controls panel.
+    """
     root = tk.Tk()
     root.title(title)
     root.geometry("1100x700")

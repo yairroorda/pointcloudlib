@@ -22,6 +22,11 @@ tkintermapview = "==1.29"
 [feature.dev.dependencies]
 pytest = ">=9.0.3,<10"
 ruff = ">=0.6,<1"
+mkdocs = ">=1.6.1,<2"
+mkdocs-material = ">=9.7.6,<10"
+mkdocstrings = ">=1.0.3,<2"
+mkdocstrings-python = ">=2.0.2,<3"
+mkdocs-include-markdown-plugin = ">=7.2.0,<8"
 
 [feature.dev.pypi-dependencies]
 cloudfetch = { path = ".", editable = true }

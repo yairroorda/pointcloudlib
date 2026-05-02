@@ -1,0 +1,44 @@
+site_name: cloudfetch
+site_description: A library for downloading arbitrary polygons of large remote point cloud datasets.
+site_url: https://yairroorda.github.io/cloudfetch/
+repo_url: https://github.com/yairroorda/cloudfetch
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: numpy
+            show_root_heading: true
+            show_root_toc_entry: true
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+            show_source: false
+  - include-markdown
+
+nav:
+  - Home: index.md
+  - Base: base.md
+  - Datasets:
+    - AHN: datasets/ahn.md
+    - IGNLidarHD: datasets/ignlidarhd.md
+    - CanElevation: datasets/canelevation.md
