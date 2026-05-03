@@ -316,7 +316,13 @@ class AOIPolygon:
         root.mainloop()
         root.destroy()
 
+        if len(points_latlon) < 3:
+            raise ValueError(f"AOI polygon requires at least 3 points; got {len(points_latlon)}")
+
         poly = ShapelyPolygon([(lon, lat) for lat, lon in points_latlon])
+        if not poly.is_valid:
+            raise ValueError(f"AOI polygon is invalid: {poly.is_valid_reason}")
+
         return cls(poly, crs="EPSG:4326")
 
     def save_to_file(self, path: Path, crs: str | None = None) -> None:
