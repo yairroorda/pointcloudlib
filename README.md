@@ -20,7 +20,7 @@ Tired of endlessly clicking through portals to download LiDAR data? Is your area
 * **Dynamic Poisson Sampling:** Control the output density via minimum point spacing (Poisson thinning) to keep file sizes manageable.
 
 ## **Who cloudfetch is for**
-Cloudfetch is basically a part of my Thesis at [TU Delft](https://www.tudelft.nl/onderwijs/opleidingen/masters/gm/msc-geomatics) that got out of hand. After a few hours of clicking through portals and dragging files aroud had me frustrated I decided to spend 10x that time building this. Basically, while anyone is welcome to use or copy cloudfetch keep in mind that:
+Cloudfetch is basically a part of my Thesis at [TU Delft](https://www.tudelft.nl/onderwijs/opleidingen/masters/gm/msc-geomatics) that got out of hand. After a few hours of clicking through portals and dragging files around had me frustrated, I decided to spend 10x that time building this. Basically, while anyone is welcome to use or copy cloudfetch keep in mind that:
 
 - ✅ If you are doing **analysis/research** using airborne LiDAR this library will probably be a good fit.
 
