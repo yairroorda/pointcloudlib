@@ -62,7 +62,7 @@ def status_spinner(message: str):
 def has_internet(timeout: int = 3) -> bool:
     """Check if an internet connection is available."""
     try:
-        requests.get("https://8.8.8.8", timeout=timeout)
+        requests.get("http://clients3.google.com/generate_204", timeout=timeout)
         return True
     except requests.exceptions.RequestException:
         return False

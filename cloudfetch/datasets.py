@@ -39,7 +39,8 @@ class IGNLidarHD(PointCloudProvider):
             return []
 
         urls = list(dict.fromkeys(index_gdf["url"].dropna().tolist()))
-        return [self._rewrite_to_ovh(url) for url in urls if self._rewrite_to_ovh(url)]
+        rewritten_urls = [self._rewrite_to_ovh(url) for url in urls]
+        return [url for url in rewritten_urls if url]
 
     def _rewrite_to_ovh(self, url: str) -> str | None:
         OVH_BASE_URL = "https://storage.sbg.cloud.ovh.net/v1/AUTH_63234f509d6048bca3c9fd7928720ca1/ppk-lidar/"

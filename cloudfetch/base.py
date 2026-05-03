@@ -4,7 +4,6 @@ import logging
 import tkinter as tk
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Literal
 
 import geopandas as gpd
 from shapely.geometry import Polygon as ShapelyPolygon
@@ -59,7 +58,7 @@ class PointCloudProvider(ABC):
         tile_urls: list[str],
         aoi: ShapelyPolygon,
         output_path: Path,
-        resolution: float | Literal["full"] = "full",
+        sampling_radius: float | None = None,
     ) -> Path:
         """Execute the PDAL pipeline to crop, merge, and write output data.
 
@@ -71,7 +70,7 @@ class PointCloudProvider(ABC):
             Area-of-interest polygon in the provider CRS.
         output_path : Path
             Destination path for the COPC output.
-        resolution : float | Literal["full"], default="full"
+        sampling_radius : float | None, default=None
             Minimum point spacing for Poisson thinning in coordinate units.
             When provided, a ``filters.sample`` stage is injected after merge
             and before writing COPC output.
@@ -107,8 +106,8 @@ class PointCloudProvider(ABC):
 
         pipeline = stages + [{"type": "filters.merge", "inputs": merge_inputs}]
 
-        if resolution != "full":
-            pipeline.append({"type": "filters.sample", "radius": resolution})
+        if sampling_radius is not None:
+            pipeline.append({"type": "filters.sample", "radius": sampling_radius})
 
         pipeline.append({
             "type": "writers.copc",
@@ -134,7 +133,7 @@ class PointCloudProvider(ABC):
         aoi: ShapelyPolygon,
         output_path: Path | str | None = None,
         aoi_crs: str = "EPSG:28992",
-        resolution: float | Literal["full"] = "full",
+        sampling_radius: float | None = None,
     ) -> Path | None:
         """Fetch point cloud data for an area of interest.
 
@@ -146,7 +145,7 @@ class PointCloudProvider(ABC):
             Optional output file path for the resulting COPC file.
         aoi_crs : str, default="EPSG:28992"
             CRS of ``aoi``.
-        resolution : float | Literal["full"], default="full"
+        sampling_radius : float | None, default=None
             Minimum point spacing for Poisson thinning in coordinate units.
             When provided, fetch applies PDAL ``filters.sample`` before writing.
 
@@ -170,7 +169,7 @@ class PointCloudProvider(ABC):
 
         logger.info(f"[{self.name}] Found {len(tile_urls)} tiles. Downloading...")
         try:
-            return self._execute_pdal(tile_urls, gdf_aoi.geometry.iloc[0], output_path, resolution=resolution)
+            return self._execute_pdal(tile_urls, gdf_aoi.geometry.iloc[0], output_path, sampling_radius=sampling_radius)
         except Exception:
             if output_path.exists():
                 output_path.unlink()
@@ -207,7 +206,7 @@ class ProviderChain(PointCloudProvider):
         aoi: ShapelyPolygon,
         output_path: Path | str | None = None,
         aoi_crs: str = "EPSG:28992",
-        resolution: float | Literal["full"] = "full",
+        sampling_radius: float | None = None,
     ) -> Path | None:
         """Try providers in sequence until one fetch succeeds.
 
@@ -219,7 +218,7 @@ class ProviderChain(PointCloudProvider):
             Optional output file path for the resulting COPC file.
         aoi_crs : str, default="EPSG:28992"
             CRS of ``aoi``.
-        resolution : float | Literal["full"], default="full"
+        sampling_radius : float | None, default=None
             Minimum point spacing for Poisson thinning in coordinate units.
             Forwarded to child provider fetch calls.
 
@@ -235,9 +234,11 @@ class ProviderChain(PointCloudProvider):
         for provider in self.providers:
             # Sync the child provider's data directory with the chain's target
             provider.data_dir = target_dir
+            provider.index_dir = provider.data_dir / "indices"
+            provider.index_dir.mkdir(parents=True, exist_ok=True)
 
             try:
-                result = provider.fetch(aoi=aoi, output_path=target_path, aoi_crs=aoi_crs, resolution=resolution)
+                result = provider.fetch(aoi=aoi, output_path=target_path, aoi_crs=aoi_crs, sampling_radius=sampling_radius)
             except Exception as exc:
                 failures.append(str(exc))
                 continue
@@ -314,7 +315,13 @@ class AOIPolygon:
         root.mainloop()
         root.destroy()
 
+        if len(points_latlon) < 3:
+            raise ValueError(f"AOI polygon requires at least 3 points; got {len(points_latlon)}")
+
         poly = ShapelyPolygon([(lon, lat) for lat, lon in points_latlon])
+        if not poly.is_valid:
+            raise ValueError(f"AOI polygon is invalid: {poly.is_valid_reason}")
+
         return cls(poly, crs="EPSG:4326")
 
     def save_to_file(self, path: Path, crs: str | None = None) -> None:
