@@ -59,7 +59,7 @@ class PointCloudProvider(ABC):
         aoi: ShapelyPolygon,
         output_path: Path,
         sampling_radius: float | None = None,
-    ) -> Path:
+    ) -> Path | None:
         """Execute the PDAL pipeline to crop, merge, and write output data.
 
         Parameters
@@ -77,8 +77,9 @@ class PointCloudProvider(ABC):
 
         Returns
         -------
-        Path
-            The output path written by PDAL.
+        Path | None
+            The output path written by PDAL, or ``None`` when the pipeline
+            runs successfully but yields zero points for the AOI.
         """
         try:
             import pdal  # type: ignore
@@ -123,6 +124,12 @@ class PointCloudProvider(ABC):
                 count = pdal.Pipeline(json.dumps(pipeline)).execute()
         except Exception as exc:
             raise PDALExecutionError(self.name, f"PDAL pipeline execution failed: {exc}") from exc
+
+        if count == 0:
+            if output_path.exists():
+                output_path.unlink()
+            logger.info(f"[{self.name}] Processed 0 points for AOI; no output written.")
+            return None
 
         logger.info(f"[{self.name}] Processed {count} points from {len(tile_urls)} tiles into {output_path.name}")
         return output_path

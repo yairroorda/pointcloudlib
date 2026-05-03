@@ -142,6 +142,28 @@ def test_execute_pdal_logs_expected_message_on_success(tmp_path: Path, dummy_pol
     assert f"[{provider.name}] Processed 54321 points from 1 tiles into {output_path.name}" in caplog.text
 
 
+def test_execute_pdal_returns_none_on_zero_points(tmp_path: Path, dummy_polygon_rdnew, monkeypatch, caplog) -> None:
+    class ZeroPipeline:
+        def __init__(self, pipeline_json: str):
+            pass
+
+        def execute(self) -> int:
+            return 0
+
+    monkeypatch.setitem(sys.modules, "pdal", types.SimpleNamespace(Pipeline=ZeroPipeline))
+
+    provider = DummyProvider(data_dir=tmp_path)
+    output_path = tmp_path / "output.copc.laz"
+    output_path.write_bytes(b"placeholder")
+
+    with caplog.at_level("INFO"):
+        result = provider._execute_pdal(["https://example.test/tile.copc.laz"], dummy_polygon_rdnew, output_path)
+
+    assert result is None
+    assert not output_path.exists()
+    assert "Processed 0 points for AOI" in caplog.text
+
+
 def test_fetch_raises_exception_if_get_index_fails(tmp_path: Path, dummy_polygon_rdnew) -> None:
     class FailingProvider(PointCloudProvider):
         name = "Failing"
